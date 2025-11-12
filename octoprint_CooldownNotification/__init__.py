@@ -32,7 +32,7 @@ class CooldownnotificationPlugin(octoprint.plugin.SettingsPlugin,
 	def get_settings_defaults(self):
 		return dict(
 			Enabled=False,
-			Threshold=40,
+			Threshold='40',
 			GCODE=""
 		)
 
@@ -71,8 +71,8 @@ class CooldownnotificationPlugin(octoprint.plugin.SettingsPlugin,
 			notify_events = ['PrintFailed', 'PrintDone']
 			
 			if event in notify_events:
-				self._logger.info("Print Ended, Watching Heatbed Temp")
 				self._logger.debug("Received Event: " + event)
+				self._logger.info("Print Ended, Watching Heatbed Temp")
 				self.inProgress = True
 				self._plugin_manager.send_plugin_message(self._identifier, dict(action="startTimer"))
 				self._TempTimer = RepeatedTimer(5, self.checkTemp, run_first=True)
@@ -83,9 +83,12 @@ class CooldownnotificationPlugin(octoprint.plugin.SettingsPlugin,
 	def checkTemp(self):
 		if 'bed' in self._printer.get_current_temperatures():
 			bedTemp = self._printer.get_current_temperatures()['bed']['actual']
+			threshold = int(self._settings.get(["Threshold"]))
 			self._logger.debug("Heatbed Temp: " + str(bedTemp))
-			if bedTemp <= self._settings.get(["Threshold"]):
+			if bedTemp <= threshold:
 				self._logger.debug("Heatbed Temp Reached Threshold")
+				self._logger.debug("Heatbed Temp: " + str(bedTemp) + "   Type: " + str(type(bedTemp).__name__))
+				self._logger.debug("Threshold: " + str(threshold) + "   Type: " + str(type(threshold).__name__))
 				self.doExecute(self._settings.get(["GCODE"]))
 				self._TempTimer.cancel()
 
@@ -131,8 +134,8 @@ __plugin_name__ = "Cooldown Notification"
 # Python 2. New plugins should make sure to run under both versions for now. Uncomment one of the following
 # compatibility flags according to what Python versions your plugin supports!
 #__plugin_pythoncompat__ = ">=2.7,<3" # only python 2
-__plugin_pythoncompat__ = ">=3,<4" # only python 3
-#__plugin_pythoncompat__ = ">=2.7,<4" # python 2 and 3
+#__plugin_pythoncompat__ = ">=3,<4" # only python 3
+__plugin_pythoncompat__ = ">=2.7,<4" # python 2 and 3
 
 def __plugin_load__():
 	global __plugin_implementation__
